@@ -5,10 +5,16 @@ import {
   Pressable,
   StyleSheet,
   Alert,
+  DeviceEventEmitter,
+  ScrollView,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Path, Svg} from 'react-native-svg';
+import RTNDataWedge from 'rtn-datawedge/js/NativeDataWedge';
 const App = () => {
+  const [scans, setScans] = useState<any[]>([]);
+  const [enumerateScanners, setEnumerateScanners] = useState('');
+
   const showAlert = (content: string) => {
     Alert.alert('Content Inside Qr Code', content, [
       {
@@ -23,8 +29,27 @@ const App = () => {
       },
     ]);
   };
+
+  useEffect(() => {
+    const subscribe = DeviceEventEmitter.addListener('barcode_scan', intent =>
+      setScans([...scans, intent]),
+    );
+    RTNDataWedge?.registerReceiver();
+    return () => subscribe.remove();
+  }, []);
+  const toggleScan = () => {
+    RTNDataWedge?.toggleScan();
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{justifyContent: 'center', alignItems: 'center'}}>
+      <View
+        style={{
+          height: 100,
+        }}
+      />
       <StatusBar
         backgroundColor={'transparent'}
         translucent
@@ -45,14 +70,10 @@ const App = () => {
         </Svg>
       </View>
       <Text style={{color: 'gray'}}>Scanning Code....</Text>
-      <Pressable
-        onPress={() => {
-          showAlert(JSON.stringify({sd: '123', dqw: '123da'}, null, 2));
-        }}
-        style={styles.button}>
+      <Pressable onPress={toggleScan} style={styles.button}>
         <Text style={styles.textButton}>Start Scan</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -61,8 +82,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
     color: 'black',
